@@ -1,3 +1,3 @@
-module github.com/nduyhai/go-module
+module github.com/nduyhai/xcore
 
 go 1.25.0
