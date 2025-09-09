@@ -1,10 +1,11 @@
-name: CI
+name: Release on Merge to Main
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ "main" ]
+
+permissions:
+  contents: write
 
 jobs:
   test:
@@ -12,23 +13,58 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.25.x]
+        go-version: [ 1.25.x ]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
 
-    - name: Check out code
-      uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: make deps
+      - name: Install dependencies
+        run: make deps
 
-    - name: Run tests
-      run: make test
+      - name: Run tests
+        run: make test
 
-    - name: Run tests with coverage
-      run: make test-coverage
+      - name: Run tests with coverage
+        run: make test-coverage
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for tagging and changelog
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+
+      - name: Install AWS multi-module tools
+        run: |
+          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/calculaterelease@latest
+          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/tagrelease@latest
+          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/changelog@latest
+
+      - name: Configure Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Calculate next per-module versions
+        run: |
+          rm -f release.json
+          calculaterelease -v -o release.json
+
+      - name: Create and push tags per module
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tagrelease -release release.json
+          git push --follow-tags || true
