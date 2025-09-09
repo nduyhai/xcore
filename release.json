@@ -1,0 +1,32 @@
+{
+    "id": "2025-09-09",
+    "with_release_tag": true,
+    "modules": {
+        ".": {
+            "module_path": "github.com/nduyhai/xcore",
+            "to": "v1.0.0-preview",
+            "changes": {
+                "new_module": true
+            }
+        },
+        "config/koanfloader": {
+            "module_path": "github.com/nduyhai/xcore/config/koanfloader",
+            "to": "v1.0.0-preview",
+            "changes": {
+                "new_module": true
+            }
+        },
+        "config/viperloader": {
+            "module_path": "github.com/nduyhai/xcore/config/viperloader",
+            "to": "v1.0.0-preview",
+            "changes": {
+                "new_module": true
+            }
+        }
+    },
+    "tags": [
+        "config/koanfloader/v1.0.0-preview",
+        "config/viperloader/v1.0.0-preview",
+        "v1.0.0-preview"
+    ]
+}
