@@ -1,6 +1,7 @@
 go 1.25.0
 
 use (
-	./config/koanfloader
-	./config/viperloader
+	.
+	config/koanfloader
+	config/viperloader
 )
