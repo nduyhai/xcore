@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/caarlos0/env/v11"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const (
