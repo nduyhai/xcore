@@ -1,21 +1,20 @@
 {
-    "id": "2025-09-11.2",
+    "id": "2025-09-11.3",
     "with_release_tag": true,
     "modules": {
         "config/envloader": {
             "module_path": "github.com/nduyhai/xcore/config/envloader",
-            "from": "v1.0.0-preview",
-            "to": "v1.0.0-preview.1",
+            "from": "v1.0.0-preview.1",
+            "to": "v1.0.0-preview.2",
             "changes": {
                 "source_change": true
             },
             "file_changes": [
-                "config/envloader/env.go",
-                "config/envloader/go.mod"
+                "config/envloader/env.go"
             ]
         }
     },
     "tags": [
-        "config/envloader/v1.0.0-preview.1"
+        "config/envloader/v1.0.0-preview.2"
     ]
 }
