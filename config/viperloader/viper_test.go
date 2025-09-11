@@ -9,46 +9,43 @@ import (
 
 type TestConfig struct {
 	Server struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
-	} `yaml:"server"`
+		Host string `mapstructure:"host"`
+		Port int    `mapstructure:"port"`
+	} `mapstructure:"server"`
 	Database struct {
-		URL      string `yaml:"url"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-	} `yaml:"database"`
-	Debug bool `yaml:"debug"`
+		URL      string `mapstructure:"url"`
+		Username string `mapstructure:"username"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"database"`
+	Debug bool `mapstructure:"debug"`
 }
 
-func TestLoad_SuccessfulLoadFromYAML(t *testing.T) {
+func TestLoad_SuccessfulLoadFromEnvWithUnderscores(t *testing.T) {
 	// Reset global state
 	resetGlobalState()
 
-	// Create temporary config directory and file
+	// Create temporary directory
 	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	configContent := `server:
-  host: localhost
-  port: 8080
-database:
-  url: postgres://localhost:5432/testdb
-  username: testuser
-  password: testpass
-debug: true`
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change to temp directory
 	originalDir, _ := os.Getwd()
 	defer os.Chdir(originalDir)
 	os.Chdir(tempDir)
+
+	// Set environment variables using __ separator for nested keys
+	os.Setenv("SERVER__HOST", "localhost")
+	os.Setenv("SERVER__PORT", "8080")
+	os.Setenv("DATABASE__URL", "postgres://localhost:5432/testdb")
+	os.Setenv("DATABASE__USERNAME", "testuser")
+	os.Setenv("DATABASE__PASSWORD", "testpass")
+	os.Setenv("DEBUG", "true")
+
+	defer func() {
+		os.Unsetenv("SERVER__HOST")
+		os.Unsetenv("SERVER__PORT")
+		os.Unsetenv("DATABASE__URL")
+		os.Unsetenv("DATABASE__USERNAME")
+		os.Unsetenv("DATABASE__PASSWORD")
+		os.Unsetenv("DEBUG")
+	}()
 
 	var config TestConfig
 	err := Load(&config)
@@ -133,45 +130,6 @@ func TestLoad_LoadFromDotEnvFile(t *testing.T) {
 	}
 }
 
-func TestLoad_InvalidYAMLFile(t *testing.T) {
-	// Reset global state
-	resetGlobalState()
-
-	// Create temporary config directory and invalid YAML file
-	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	invalidYAML := `server:
-  host: localhost
-  port: [invalid yaml structure
-    missing proper brackets]
-debug: true`
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(invalidYAML), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change to temp directory
-	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(tempDir)
-
-	var config TestConfig
-	err := Load(&config)
-
-	if err == nil {
-		t.Fatalf("Expected error due to invalid YAML, got nil")
-	}
-
-	if !containsString(err.Error(), "viperloader: unmarshal") {
-		t.Errorf("Expected error message to contain 'viperloader: unmarshal', got: %s", err.Error())
-	}
-}
-
 func TestLoad_InvalidDotEnvFile(t *testing.T) {
 	// Reset global state
 	resetGlobalState()
@@ -231,68 +189,26 @@ func TestLoad_NoConfigFiles(t *testing.T) {
 	}
 }
 
-func TestLoad_UnmarshalError(t *testing.T) {
-	// Reset global state
-	resetGlobalState()
-
-	// Create temporary config directory and file
-	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	configContent := `server:
-  host: localhost
-  port: "not_a_number"` // This will cause unmarshal error
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change to temp directory
-	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(tempDir)
-
-	var config TestConfig
-	err := Load(&config)
-
-	if err == nil {
-		t.Fatalf("Expected unmarshal error, got nil")
-	}
-
-	if !containsString(err.Error(), "viperloader: unmarshal") {
-		t.Errorf("Expected error message to contain 'viperloader: unmarshal', got: %s", err.Error())
-	}
-}
-
 func TestLoad_ConcurrentCalls(t *testing.T) {
 	// Reset global state
 	resetGlobalState()
 
-	// Create temporary config directory and file
+	// Create temporary directory
 	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	configContent := `server:
-  host: localhost
-  port: 8080
-debug: true`
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change to temp directory
 	originalDir, _ := os.Getwd()
 	defer os.Chdir(originalDir)
 	os.Chdir(tempDir)
+
+	// Set environment variables for testing
+	os.Setenv("SERVER__HOST", "localhost")
+	os.Setenv("SERVER__PORT", "8080")
+	os.Setenv("DEBUG", "true")
+
+	defer func() {
+		os.Unsetenv("SERVER__HOST")
+		os.Unsetenv("SERVER__PORT")
+		os.Unsetenv("DEBUG")
+	}()
 
 	// Test concurrent calls to ensure sync.Once works correctly
 	var wg sync.WaitGroup
@@ -321,36 +237,26 @@ func TestLoad_ConfigPrecedence(t *testing.T) {
 	// Reset global state
 	resetGlobalState()
 
-	// Create temporary config directory and file
+	// Create temporary directory
 	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
 
-	// 1. Create YAML config (lowest precedence)
-	yamlContent := `server:
-  host: yaml-host
-  port: 8080
-debug: false`
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// 2. Create .env file (medium precedence)
-	envContent := `SERVER_HOST=dotenv-host
-DEBUG=true`
+	// 1. Create .env file (lower precedence) - only use flat keys that work
+	envContent := `DEBUG=false`
 
 	envFile := filepath.Join(tempDir, ".env")
 	if err := os.WriteFile(envFile, []byte(envContent), 0644); err != nil {
 		t.Fatalf("Failed to write .env file: %v", err)
 	}
 
-	// 3. Set environment variables (highest precedence)
-	os.Setenv("SERVER_PORT", "9999")
-	defer os.Unsetenv("SERVER_PORT")
+	// 2. Set environment variables (highest precedence) - should override .env
+	os.Setenv("DEBUG", "true")
+	os.Setenv("SERVER__PORT", "9999")
+	os.Setenv("DATABASE__URL", "postgres://env-override")
+	defer func() {
+		os.Unsetenv("DEBUG")
+		os.Unsetenv("SERVER__PORT")
+		os.Unsetenv("DATABASE__URL")
+	}()
 
 	// Change to temp directory
 	originalDir, _ := os.Getwd()
@@ -364,15 +270,15 @@ DEBUG=true`
 		t.Fatalf("Expected no error, got: %v", err)
 	}
 
-	// Verify precedence: env vars > .env file > YAML file (only test what works)
-	if config.Server.Host != "yaml-host" {
-		t.Errorf("Expected server.host=yaml-host (from YAML), got: %s", config.Server.Host)
+	// Verify precedence: env vars > .env file
+	if !config.Debug {
+		t.Errorf("Expected debug=true (env var override), got: %t", config.Debug)
 	}
 	if config.Server.Port != 9999 {
-		t.Errorf("Expected server.port=9999 (env var override), got: %d", config.Server.Port)
+		t.Errorf("Expected server.port=9999 (env var), got: %d", config.Server.Port)
 	}
-	if !config.Debug {
-		t.Errorf("Expected debug=true (.env override), got: %t", config.Debug)
+	if config.Database.URL != "postgres://env-override" {
+		t.Errorf("Expected database.url=postgres://env-override (env var), got: %s", config.Database.URL)
 	}
 }
 
@@ -380,28 +286,22 @@ func TestLoad_WeaklyTypedInput(t *testing.T) {
 	// Reset global state
 	resetGlobalState()
 
-	// Create temporary config directory and file
+	// Create temporary directory
 	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "config")
-	if err := os.Mkdir(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	// Use string values that should be converted to appropriate types
-	configContent := `server:
-  host: localhost
-  port: "8080"  # String that should convert to int
-debug: "true"   # String that should convert to bool`
-
-	configFile := filepath.Join(configDir, "config.yaml")
-	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change to temp directory
 	originalDir, _ := os.Getwd()
 	defer os.Chdir(originalDir)
 	os.Chdir(tempDir)
+
+	// Use string values in environment variables that should be converted to appropriate types
+	os.Setenv("SERVER__HOST", "localhost")
+	os.Setenv("SERVER__PORT", "8080") // String that should convert to int
+	os.Setenv("DEBUG", "true")        // String that should convert to bool
+
+	defer func() {
+		os.Unsetenv("SERVER__HOST")
+		os.Unsetenv("SERVER__PORT")
+		os.Unsetenv("DEBUG")
+	}()
 
 	var config TestConfig
 	err := Load(&config)

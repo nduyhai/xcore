@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 	"sync"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -11,9 +12,8 @@ import (
 )
 
 const (
-	configYAMLPath = "config/config.yaml"
-	dotEnvPath     = ".env"
-	decoderTag     = "yaml"
+	dotEnvPath = ".env"
+	decoderTag = "mapstructure"
 )
 
 var (
@@ -22,26 +22,22 @@ var (
 	vSnapshot *viper.Viper // immutable config snapshot after first init
 )
 
-// Load initializes a cached Viper instance once (YAML -> .env -> process env),
+// Load initializes a cached Viper instance once (.env -> process env),
 // then unmarshals the merged configuration into dst on every call.
 func Load(dst any) error {
 	once.Do(func() {
 		v := viper.New()
 
-		// 1) Base YAML (ignore if missing)
-		if err := mergeConfigIgnoreNotFound(v, configYAMLPath, "", "viper: read yaml"); err != nil {
-			initErr = err
-			return
-		}
-
-		// 2) .env overrides (ignore if missing)
+		// Configure environment variable handling
+		v.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
+		v.AllowEmptyEnv(true)
+		v.AutomaticEnv()
+		
+		// 1) .env file (ignore if missing)
 		if err := mergeConfigIgnoreNotFound(v, dotEnvPath, "env", "viper: read .env"); err != nil {
 			initErr = err
 			return
 		}
-
-		// 3) Process env (the highest precedence)
-		v.AutomaticEnv()
 
 		// Keep the snapshot for reuse
 		vSnapshot = v

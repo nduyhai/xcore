@@ -4,4 +4,5 @@ use (
 	.
 	config/koanfloader
 	config/viperloader
+	config/envloader
 )
