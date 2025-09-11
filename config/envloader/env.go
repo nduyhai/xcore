@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/caarlos0/env/v11"
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -27,10 +27,7 @@ func Load(dst any) error {
 	}
 
 	once.Do(func() {
-		// The env library doesn't require initialization like viper or koanf
-		// It directly parses environment variables on each call
-		// We use sync.Once here to maintain consistency with other loaders
-		// and for potential future initialization needs
+		_ = godotenv.Load()
 	})
 
 	if initErr != nil {
