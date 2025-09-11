@@ -1,29 +1,21 @@
 {
-    "id": "2025-09-11",
+    "id": "2025-09-11.2",
     "with_release_tag": true,
     "modules": {
         "config/envloader": {
             "module_path": "github.com/nduyhai/xcore/config/envloader",
-            "to": "v1.0.0-preview",
-            "changes": {
-                "new_module": true
-            }
-        },
-        "config/viperloader": {
-            "module_path": "github.com/nduyhai/xcore/config/viperloader",
             "from": "v1.0.0-preview",
             "to": "v1.0.0-preview.1",
             "changes": {
                 "source_change": true
             },
             "file_changes": [
-                "config/viperloader/viper.go",
-                "config/viperloader/viper_test.go"
+                "config/envloader/env.go",
+                "config/envloader/go.mod"
             ]
         }
     },
     "tags": [
-        "config/envloader/v1.0.0-preview",
-        "config/viperloader/v1.0.0-preview.1"
+        "config/envloader/v1.0.0-preview.1"
     ]
 }
