@@ -1,16 +1,9 @@
 {
-    "id": "2025-09-09",
+    "id": "2025-09-11",
     "with_release_tag": true,
     "modules": {
-        ".": {
-            "module_path": "github.com/nduyhai/xcore",
-            "to": "v1.0.0-preview",
-            "changes": {
-                "new_module": true
-            }
-        },
-        "config/koanfloader": {
-            "module_path": "github.com/nduyhai/xcore/config/koanfloader",
+        "config/envloader": {
+            "module_path": "github.com/nduyhai/xcore/config/envloader",
             "to": "v1.0.0-preview",
             "changes": {
                 "new_module": true
@@ -18,15 +11,19 @@
         },
         "config/viperloader": {
             "module_path": "github.com/nduyhai/xcore/config/viperloader",
-            "to": "v1.0.0-preview",
+            "from": "v1.0.0-preview",
+            "to": "v1.0.0-preview.1",
             "changes": {
-                "new_module": true
-            }
+                "source_change": true
+            },
+            "file_changes": [
+                "config/viperloader/viper.go",
+                "config/viperloader/viper_test.go"
+            ]
         }
     },
     "tags": [
-        "config/koanfloader/v1.0.0-preview",
-        "config/viperloader/v1.0.0-preview",
-        "v1.0.0-preview"
+        "config/envloader/v1.0.0-preview",
+        "config/viperloader/v1.0.0-preview.1"
     ]
 }
