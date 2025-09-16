@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package gerr;
+
+option go_package = "github.com/nduyhai/xcore/error/gerr";
+
+// ProtoReason represents a reason that can be transmitted via GRPC error details
+message ProtoReason {
+  // error_code is the string representation of the error code
+  string error_code = 1;
+
+  // error_message is the human-readable error message
+  string error_message = 2;
+
+  // http_code is the optional HTTP status code
+  optional int32 http_code = 3;
+
+  // grpc_code is the optional GRPC status code
+  optional int32 grpc_code = 4;
+}
