@@ -1,20 +1,24 @@
 {
-    "id": "2025-09-11.3",
+    "id": "2025-09-16",
     "with_release_tag": true,
     "modules": {
-        "config/envloader": {
-            "module_path": "github.com/nduyhai/xcore/config/envloader",
-            "from": "v1.0.0-preview.1",
-            "to": "v1.0.0-preview.2",
+        "error/gerr": {
+            "module_path": "github.com/nduyhai/xcore/error/gerror",
+            "to": "v1.0.0-preview",
             "changes": {
-                "source_change": true
-            },
-            "file_changes": [
-                "config/envloader/env.go"
-            ]
+                "new_module": true
+            }
+        },
+        "error/xerr": {
+            "module_path": "github.com/nduyhai/xcore/error/xerr",
+            "to": "v1.0.0-preview",
+            "changes": {
+                "new_module": true
+            }
         }
     },
     "tags": [
-        "config/envloader/v1.0.0-preview.2"
+        "error/gerr/v1.0.0-preview",
+        "error/xerr/v1.0.0-preview"
     ]
 }
