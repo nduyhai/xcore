@@ -5,6 +5,7 @@ use (
 	config/koanfloader
 	config/viperloader
 	config/envloader
-	./error/xerr
-	./error/gerr
+	error/xerr
+	error/gerr
+	error/xgen
 )

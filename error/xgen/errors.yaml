@@ -1,0 +1,24 @@
+# Name of the Go package where the errors will be defined.
+package: xgen
+
+import: ggithub.com/nduyhai/xcore/error/xerr
+
+output_filepath: ./internal/xgen/payment.go
+
+# Domain prefix for auto-generated error codes
+domain: PAYMENT
+
+errors:
+  - name: UserIDNotFound
+    message: User not found
+    http_status_code: 404
+
+  - name: InvalidInput
+    message: Invalid input provided
+    grpc_code: InvalidArgument
+
+  - name: InternalError
+    message: Internal server error
+    http_status_code: 500
+    grpc_code: Internal
+
