@@ -43,7 +43,7 @@ func ErrorToGRPCStatus(err xerr.Error) *status.Status {
 	}
 
 	// Get GRPC code from reason
-	grpcCode := xerr.GetGRPCCode(err.Reason())
+	grpcCode := GetGRPCCode(err.Reason())
 
 	// Create status with basic info
 	st := status.New(grpcCode, err.Error())
@@ -62,7 +62,7 @@ func ErrorToGRPCStatus(err xerr.Error) *status.Status {
 
 			// Check if reason has HTTP/GRPC codes
 			var httpCode *int
-			var gCode = xerr.GetGRPCCode(err.Reason())
+			var gCode = GetGRPCCode(err.Reason())
 
 			if httpAware, ok := err.Reason().(xerr.HTTPAware); ok {
 				httpCodeVal := httpAware.HTTPCode()
@@ -79,4 +79,11 @@ func ErrorToGRPCStatus(err xerr.Error) *status.Status {
 	}
 
 	return st
+}
+
+func ErrorToGRPCCode(err xerr.Error) codes.Code {
+	if err == nil {
+		return codes.OK
+	}
+	return GetGRPCCode(err.Reason())
 }
