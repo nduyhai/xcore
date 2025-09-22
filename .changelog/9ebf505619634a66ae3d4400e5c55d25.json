@@ -1,9 +1,0 @@
-{
-    "id": "9ebf5056-1963-4a66-ae3d-4400e5c55d25",
-    "type": "release",
-    "collapse": true,
-    "description": "v1.0.0",
-    "modules": [
-        "error/xgen"
-    ]
-}

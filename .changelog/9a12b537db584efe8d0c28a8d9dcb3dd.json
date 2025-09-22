@@ -1,9 +1,0 @@
-{
-    "id": "9a12b537-db58-4efe-8d0c-28a8d9dcb3dd",
-    "type": "release",
-    "collapse": true,
-    "description": "v1.0.0",
-    "modules": [
-        "error/xerr"
-    ]
-}

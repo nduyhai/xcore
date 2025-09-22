@@ -1,9 +1,0 @@
-{
-    "id": "56d79678-58c8-4681-a7b3-d32f8fa3808b",
-    "type": "release",
-    "collapse": true,
-    "description": "v1.0.1",
-    "modules": [
-        "error/gerr"
-    ]
-}
