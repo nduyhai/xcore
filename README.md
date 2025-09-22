@@ -40,3 +40,7 @@ Edit the README.md, package names, and other placeholders as needed.
 make run
 ```
 
+### Create module release
+```shell
+ make changelog-create RELEASE="v1.0.0" PACKAGE="error/gerr"
+```
