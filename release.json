@@ -1,20 +1,16 @@
 {
-    "id": "2025-09-16.2",
+    "id": "2025-09-22",
     "with_release_tag": true,
     "modules": {
-        "error/gerr": {
-            "module_path": "github.com/nduyhai/xcore/error/gerror",
-            "from": "v1.0.0-preview",
-            "to": "v1.0.0-preview.1",
+        "error/xgen": {
+            "module_path": "github.com/nduyhai/xcore/error/xgen",
+            "to": "v1.0.0-preview",
             "changes": {
-                "source_change": true
-            },
-            "file_changes": [
-                "error/gerr/go.mod"
-            ]
+                "new_module": true
+            }
         }
     },
     "tags": [
-        "error/gerr/v1.0.0-preview.1"
+        "error/xgen/v1.0.0-preview"
     ]
 }
