@@ -198,6 +198,8 @@ module-create:
 	echo "==> creating default changelog entry for $(MODULE): v1.0.0"; \
 	changelog create -ni -r -t release -d "v1.0.0" "$(MODULE)"; \
 
+xgen:
+	go run ./error/xgen/generator.go -config ./error/xgen/errors.yaml
 # Help
 help:
 	@echo "Make targets:"
@@ -215,4 +217,5 @@ help:
 	@echo "  install-tools  - Install AWS multi-module tools (makerelative, updaterequires, calculaterelease, tagrelease, generatechangelog, changelog)"
 	@echo "  changelog-create - Create a non-interactive changelog entry; requires RELEASE and PACKAGE"
 	@echo "  module-create  - Create a new module with go.mod, placeholder file, modman.toml update, go.work update, and changelog entry"
+	@echo "  xgen  			- General error"
 	@echo "  help           - Show this help"
