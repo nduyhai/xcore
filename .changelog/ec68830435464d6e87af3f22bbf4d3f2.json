@@ -1,9 +1,0 @@
-{
-  "id": "ec688304-3546-4d6e-87af-3f22bbf4d3f2",
-  "type": "release",
-  "collapse": true,
-  "description": "v1.0.1",
-  "modules": [
-    "."
-  ]
-}
