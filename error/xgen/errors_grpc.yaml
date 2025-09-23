@@ -1,0 +1,21 @@
+# Name of the Go package where the errors will be defined.
+package: xgen
+
+output_filepath: ./internal/xgen/core.go
+
+# Domain prefix for auto-generated error codes
+domain: CORE
+
+errors:
+  - name: UserIDNotFound
+    message: User not found
+    grpc_code: NotFound
+
+  - name: InvalidInput
+    message: Invalid input provided
+    grpc_code: InvalidArgument
+
+  - name: InternalError
+    message: Internal server error
+    grpc_code: Internal
+
