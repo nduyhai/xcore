@@ -1,7 +1,7 @@
 # Name of the Go package where the errors will be defined.
 package: xgen
 
-import: ggithub.com/nduyhai/xcore/error/xerr
+import: github.com/nduyhai/xcore/error/xerr
 
 output_filepath: ./internal/xgen/payment.go
 

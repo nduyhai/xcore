@@ -1,26 +1,6 @@
 {
-    "id": "2025-09-22.3",
+    "id": "2025-09-23",
     "with_release_tag": true,
-    "modules": {
-        "config/viperloader": {
-            "module_path": "github.com/nduyhai/xcore/config/viperloader",
-            "from": "v1.0.0-preview.1",
-            "to": "v1.0.0-v",
-            "changes": {
-                "source_change": true
-            }
-        },
-        "error/gerr": {
-            "module_path": "github.com/nduyhai/xcore/error/gerror",
-            "from": "v1.0.0",
-            "to": "v1.0.1-v",
-            "changes": {
-                "source_change": true
-            }
-        }
-    },
-    "tags": [
-        "config/viperloader/v1.0.0-v",
-        "error/gerr/v1.0.1-v"
-    ]
+    "modules": {},
+    "tags": null
 }
