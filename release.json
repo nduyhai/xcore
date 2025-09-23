@@ -1,0 +1,20 @@
+{
+    "id": "2025-09-23.2",
+    "with_release_tag": true,
+    "modules": {
+        "error/xgen": {
+            "module_path": "github.com/nduyhai/xcore/error/xgen",
+            "from": "v1.0.0-v",
+            "to": "v1.0.0-v.1",
+            "changes": {
+                "source_change": true
+            },
+            "file_changes": [
+                "error/xgen/generator.go"
+            ]
+        }
+    },
+    "tags": [
+        "error/xgen/v1.0.0-v.1"
+    ]
+}
