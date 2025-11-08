@@ -1,0 +1,9 @@
+{
+    "id": "f61b27a4-3e9d-41de-9c1b-4b547a01897d",
+    "type": "release",
+    "collapse": true,
+    "description": "v1.0.0",
+    "modules": [
+        "pubsub/franzgo"
+    ]
+}
