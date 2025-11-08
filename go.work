@@ -8,4 +8,6 @@ use (
 	error/xerr
 	error/gerr
 	error/xgen
+	pubsub/kafkit
+	pubsub/segmentio
 )

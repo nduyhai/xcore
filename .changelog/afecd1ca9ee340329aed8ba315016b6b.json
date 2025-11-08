@@ -1,9 +1,9 @@
 {
-    "id": "b1bccf51-423d-4122-8a03-c0be36e7bd7d",
+    "id": "afecd1ca-9ee3-4032-9aed-8ba315016b6b",
     "type": "release",
     "collapse": true,
     "description": "v1.0.0",
     "modules": [
-        "pubsub/kafkit"
+        "pubsub/segmentio"
     ]
 }
