@@ -1,0 +1,9 @@
+{
+    "id": "b1bccf51-423d-4122-8a03-c0be36e7bd7d",
+    "type": "release",
+    "collapse": true,
+    "description": "v1.0.0",
+    "modules": [
+        "pubsub/kafkit"
+    ]
+}
