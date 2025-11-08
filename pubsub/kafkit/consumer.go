@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type HandlerFunc func(ctx context.Context, msg ConsumeMessage) error
+
+func (f HandlerFunc) Handle(ctx context.Context, msg ConsumeMessage) error { return f(ctx, msg) }
+
 type Handler interface {
 	Handle(ctx context.Context, msg ConsumeMessage) error
 }
