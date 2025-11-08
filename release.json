@@ -1,33 +1,32 @@
 {
-    "id": "2025-11-08",
+    "id": "2025-11-08.2",
     "with_release_tag": true,
     "modules": {
-        "error/xgen": {
-            "module_path": "github.com/nduyhai/xcore/error/xgen",
-            "from": "v1.0.0-v.1",
-            "to": "v1.0.0-v.2",
+        "pubsub/kafkit": {
+            "module_path": "github.com/nduyhai/xcore/pubsub/kafkit",
+            "from": "v1.0.0",
+            "to": "v1.0.1",
             "changes": {
                 "source_change": true
             },
             "file_changes": [
-                "error/xgen/internal/xgen/core.go",
-                "error/xgen/internal/xgen/payment.go",
-                "error/xgen/internal/xgen/user.go"
+                "pubsub/kafkit/consumer.go"
             ]
         },
-        "pubsub/kafkit": {
-            "module_path": "github.com/nduyhai/xcore/pubsub/kafkit",
+        "pubsub/segmentio": {
+            "module_path": "github.com/nduyhai/xcore/pubsub/segmentio",
             "to": "v1.0.0",
             "changes": {
-                "new_module": true
+                "new_module": true,
+                "dependency_update": true
             },
             "annotations": [
-                "b1bccf51-423d-4122-8a03-c0be36e7bd7d"
+                "afecd1ca-9ee3-4032-9aed-8ba315016b6b"
             ]
         }
     },
     "tags": [
-        "error/xgen/v1.0.0-v.2",
-        "pubsub/kafkit/v1.0.0"
+        "pubsub/kafkit/v1.0.1",
+        "pubsub/segmentio/v1.0.0"
     ]
 }
