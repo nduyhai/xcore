@@ -10,4 +10,5 @@ use (
 	error/xgen
 	pubsub/kafkit
 	pubsub/segmentio
+	pubsub/franzgo
 )
