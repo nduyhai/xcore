@@ -30,6 +30,9 @@ type ConsumerConfig struct {
 	CommitInterval           time.Duration
 	HeaderRedactionAllowlist []string
 	Logger                   *slog.Logger
+	// ProducerSendTimeout is the timeout applied to DLQ/retry SendWith calls when sending messages to external producers.
+	// If zero, the consumer will use a sensible default (5s).
+	ProducerSendTimeout time.Duration
 }
 
 type RetryPolicy struct {

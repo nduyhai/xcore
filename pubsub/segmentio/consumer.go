@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/nduyhai/xcore/pubsub/kafkit"
 	"github.com/segmentio/kafka-go"
 )
+
+const defaultProducerSendTimeout = 5 * time.Second
 
 type segmentIOConsumer struct {
 	reader  segmentioReader
@@ -17,6 +20,7 @@ type segmentIOConsumer struct {
 	cfg     kafkit.ConsumerConfig
 	handler kafkit.Handler
 	logger  *slog.Logger
+	wg      sync.WaitGroup
 }
 
 type segmentioReader interface {
@@ -61,43 +65,103 @@ func newSegmentIOConsumer(cfg kafkit.ConsumerConfig, handler kafkit.Handler) (ka
 }
 
 func (s *segmentIOConsumer) Start(ctx context.Context) error {
-	sem := make(chan struct{}, s.cfg.MaxConcurrent)
+	go func() {
+		err := s.start(ctx)
+		if err != nil {
+			s.logger.Error("consumer failed", "err", err)
+		}
+	}()
+	return nil
+}
+
+func (s *segmentIOConsumer) start(ctx context.Context) error {
+	maxWorkers := s.cfg.MaxConcurrent
+	if maxWorkers <= 0 {
+		maxWorkers = 1
+	}
+	msgBuf := maxWorkers * 2
+	messages := make(chan kafka.Message, msgBuf)
+	commitChan := make(chan kafka.Message, msgBuf)
+
+	// start commit worker (track with s.wg)
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		// commit worker: commit each message as it arrives
+		for m := range commitChan {
+			if err := s.reader.CommitMessages(ctx, m); err != nil {
+				s.logger.Error("commit failed", "err", err)
+			}
+		}
+	}()
+
+	// start workers (track with local workerWG so we can deterministically close commitChan)
+	var workerWG sync.WaitGroup
+	for i := 0; i < maxWorkers; i++ {
+		workerWG.Add(1)
+		go func(workerID int) {
+			defer workerWG.Done()
+			for m := range messages {
+				if err := s.handleWithRetry(ctx, m); err != nil {
+					s.logger.Error("message failed", "topic", m.Topic, "partition", m.Partition, "offset", m.Offset, "err", err)
+					_ = s.sendToDLQ(ctx, m, err)
+				}
+				// forward to commit a channel regardless of error to keep previous semantics
+				select {
+				case commitChan <- m:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}(i)
+	}
+
 	ticker := time.NewTicker(s.cfg.CommitInterval)
 	defer ticker.Stop()
 
+fetchLoop:
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info("consumer shutting down")
-			return nil
+			s.logger.Info("consumer shutting down - stopping fetch and waiting for in-flight handlers")
+			// stop fetching and break to shutdown: close messages then wait for workers
+			break fetchLoop
 
 		case <-ticker.C:
-			// periodic offset commit can be implemented if desired
+			// keep-alive event; nothing to do here
 			continue
 
 		default:
 			msg, err := s.reader.FetchMessage(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					return nil
+					// context canceled; break fetch loop and shutdown
+					s.logger.Info("consumer context cancelled - stopping fetch and waiting for in-flight handlers")
+					break fetchLoop
 				}
 				s.logger.Error("fetch error", "err", err)
 				continue
 			}
 
-			sem <- struct{}{}
-			go func(m kafka.Message) {
-				defer func() { <-sem }()
-				if err := s.handleWithRetry(ctx, m); err != nil {
-					s.logger.Error("message failed", "topic", m.Topic, "partition", m.Partition, "offset", m.Offset, "err", err)
-					_ = s.sendToDLQ(ctx, m, err)
-				}
-				if err := s.reader.CommitMessages(ctx, m); err != nil {
-					s.logger.Error("commit failed", "err", err)
-				}
-			}(msg)
+			select {
+			case messages <- msg:
+			case <-ctx.Done():
+				// if context cancelled while trying to push, stop
+				break fetchLoop
+			}
 		}
 	}
+
+	// shutdown sequence: stop accepting messages, wait for workers to finish, then close commit channel and wait for commit worker
+	close(messages)
+	// wait for workers to finish forwarding to commitChan
+	workerWG.Wait()
+	// all workers done; safe to close commitChan to allow commit worker to finish
+	close(commitChan)
+
+	// wait for the commit worker to finish
+	s.wg.Wait()
+	return nil
 }
 
 func (s *segmentIOConsumer) handleWithRetry(ctx context.Context, msg kafka.Message) error {
@@ -119,7 +183,14 @@ func (s *segmentIOConsumer) handleWithRetry(ctx context.Context, msg kafka.Messa
 		if attempts >= s.cfg.Retry.MaxAttempts {
 			s.logger.Warn("max attempts reached, send to retry topic", "err", err)
 			if s.retry != nil {
-				_ = s.retry.SendWith(ctx, msg.Value, kafkit.WithKey(msg.Key))
+				// use a bounded timeout for retry sends to avoid blocking indefinitely
+				timeout := s.cfg.ProducerSendTimeout
+				if timeout <= 0 {
+					timeout = defaultProducerSendTimeout
+				}
+				sendCtx, cancel := context.WithTimeout(ctx, timeout)
+				_ = s.retry.SendWith(sendCtx, msg.Value, kafkit.WithKey(msg.Key))
+				cancel()
 			}
 			return err
 		}
@@ -170,8 +241,22 @@ func (s *segmentIOConsumer) sendToDLQ(ctx context.Context, msg kafka.Message, ca
 		"timestamp": msg.Time,
 	}
 
-	data, _ := json.Marshal(payload)
-	err := s.dlq.SendWith(ctx, data, kafkit.WithKey(msg.Key))
+	data, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.Error("failed to marshal DLQ payload", "err", err)
+		return err
+	}
+
+	// use a bounded timeout for DLQ sends to avoid blocking handlers indefinitely
+	timeout := s.cfg.ProducerSendTimeout
+	if timeout <= 0 {
+		timeout = defaultProducerSendTimeout
+	}
+
+	sendCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	err = s.dlq.SendWith(sendCtx, data, kafkit.WithKey(msg.Key))
 	if err != nil {
 		s.logger.Error("failed to send to DLQ", "err", err)
 	}
@@ -179,10 +264,46 @@ func (s *segmentIOConsumer) sendToDLQ(ctx context.Context, msg kafka.Message, ca
 }
 
 func (s *segmentIOConsumer) Close(ctx context.Context) error {
+	var readerErr error
 	if s.reader != nil {
-		return s.reader.Close()
+		readerErr = s.reader.Close()
 	}
-	return nil
+
+	// wait for in-flight handlers to finish, respecting ctx
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// after all workers/commit worker finished, close producers
+		var prodErr error
+		if s.dlq != nil {
+			if err := s.dlq.Close(ctx); err != nil {
+				prodErr = err
+			}
+		}
+		if s.retry != nil {
+			if err := s.retry.Close(ctx); err != nil {
+				if prodErr == nil {
+					prodErr = err
+				}
+			}
+		}
+		// prefer reader error if present, otherwise producer close error
+		if readerErr != nil {
+			return readerErr
+		}
+		return prodErr
+	case <-ctx.Done():
+		// prefer returning ctx.Err() so callers know we timed out/cancelled while waiting
+		if readerErr != nil {
+			return readerErr
+		}
+		return ctx.Err()
+	}
 }
 
 func redactSegmentIOHeaders(headers []kafka.Header, allowlist []string) map[string]string {
