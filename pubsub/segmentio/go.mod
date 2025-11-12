@@ -3,7 +3,7 @@ module github.com/nduyhai/xcore/pubsub/segmentio
 go 1.25.0
 
 require (
-	github.com/nduyhai/xcore/pubsub/kafkit v1.0.1
+	github.com/nduyhai/xcore/pubsub/kafkit v1.0.2
 	github.com/segmentio/kafka-go v0.4.49
 	github.com/testcontainers/testcontainers-go/modules/kafka v0.40.0
 )
