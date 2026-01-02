@@ -1,32 +1,42 @@
 {
-    "id": "2025-11-08.2",
+    "id": "2026-01-02",
     "with_release_tag": true,
     "modules": {
-        "pubsub/kafkit": {
-            "module_path": "github.com/nduyhai/xcore/pubsub/kafkit",
-            "from": "v1.0.0",
-            "to": "v1.0.1",
+        "error/gerr": {
+            "module_path": "github.com/nduyhai/xcore/error/gerr",
+            "from": "v1.0.1-v",
+            "to": "v1.0.1-v.1",
             "changes": {
                 "source_change": true
             },
             "file_changes": [
-                "pubsub/kafkit/consumer.go"
+                "error/gerr/go.mod"
             ]
         },
-        "pubsub/segmentio": {
-            "module_path": "github.com/nduyhai/xcore/pubsub/segmentio",
-            "to": "v1.0.0",
+        "error/xgen": {
+            "module_path": "github.com/nduyhai/xcore/error/xgen",
+            "from": "v1.0.0-v.2",
+            "to": "v1.0.0-v.3",
             "changes": {
-                "new_module": true,
-                "dependency_update": true
+                "source_change": true
             },
-            "annotations": [
-                "afecd1ca-9ee3-4032-9aed-8ba315016b6b"
+            "file_changes": [
+                "error/xgen/internal/xgen/core.go",
+                "error/xgen/internal/xgen/payment.go",
+                "error/xgen/internal/xgen/user.go"
             ]
+        },
+        "pubsub/franzgo": {
+            "module_path": "github.com/nduyhai/xcore/pubsub/franzgo",
+            "to": "v1.0.0-preview",
+            "changes": {
+                "new_module": true
+            }
         }
     },
     "tags": [
-        "pubsub/kafkit/v1.0.1",
-        "pubsub/segmentio/v1.0.0"
+        "error/gerr/v1.0.1-v.1",
+        "error/xgen/v1.0.0-v.3",
+        "pubsub/franzgo/v1.0.0-preview"
     ]
 }
