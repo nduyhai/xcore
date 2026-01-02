@@ -1,81 +1,34 @@
-name: Release on Merge to Main
+name: Auto tag modules
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: write
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go (from go.work)
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.work
-          cache: true
-
-      - name: Install dependencies
-        run: make deps
-
-      - name: Run tests
-        run: make test
-
-      - name: Run tests with coverage
-        run: make test-coverage
-
   release:
-    name: Tag patch release (per module)
     runs-on: ubuntu-latest
-    needs: [ test ]
-    if: ${{ github.ref == 'refs/heads/main' }}
     steps:
-      - name: Checkout (full history for tags)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # persist-credentials default true, needed to push tags with GITHUB_TOKEN
 
-      - name: Setup Go (from go.work)
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.work
           cache: true
 
-      - name: Install AWS multi-module tools
-        run: |
-          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/calculaterelease@latest
-          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/tagrelease@latest
-
-      - name: Configure Git user
+      - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Calculate next versions (defaults to PATCH if no annotations)
+      - name: Dry run (log)
         run: |
-          rm -f release.json
-          calculaterelease -v -o release.json
-          cat release.json
+          go run ./cmd/modrelease --dry-run
 
-      - name: Create tags from manifest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag & push
         run: |
-          tagrelease -release release.json
-
-      - name: Push tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git push --follow-tags
+          go run ./cmd/modrelease --dry-run=false --push
