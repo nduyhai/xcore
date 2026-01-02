@@ -1,4 +1,4 @@
-module github.com/nduyhai/xcore/error/gerror
+module github.com/nduyhai/xcore/error/gerr
 
 go 1.24.5
 
