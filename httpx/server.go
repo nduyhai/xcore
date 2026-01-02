@@ -1,8 +1,6 @@
 package httpx
 
 import (
-	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -81,22 +79,4 @@ func (s *Server) build() {
 		WriteTimeout:      s.cfg.WriteTimeout,
 		IdleTimeout:       s.cfg.IdleTimeout,
 	}
-}
-
-func (s *Server) Start(ctx context.Context) error {
-	go func() {
-		s.log.Info("http server starting", "name", s.cfg.Name, "addr", s.cfg.Addr)
-		if err := s.httpS.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.log.Error("http server failed", "err", err)
-		}
-	}()
-	return nil
-}
-
-func (s *Server) Stop(ctx context.Context) error {
-	stopCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
-	defer cancel()
-
-	s.log.Info("http server stopping", "name", s.cfg.Name, "timeout", s.cfg.ShutdownTimeout.String())
-	return s.httpS.Shutdown(stopCtx)
 }
