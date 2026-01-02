@@ -2,28 +2,28 @@ name: Release on Merge to Main
 
 on:
   push:
-    branches: [ "release" ]
+    branches: [ "main" ]
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [ 1.25.x ]
-
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Go
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go (from go.work)
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Check out code
-        uses: actions/checkout@v4
+          go-version-file: go.work
+          cache: true
 
       - name: Install dependencies
         run: make deps
@@ -33,38 +33,49 @@ jobs:
 
       - name: Run tests with coverage
         run: make test-coverage
+
   release:
+    name: Tag patch release (per module)
     runs-on: ubuntu-latest
+    needs: [ test ]
+    if: ${{ github.ref == 'refs/heads/main' }}
     steps:
-      - name: Checkout
+      - name: Checkout (full history for tags)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed for tagging and changelog
+          fetch-depth: 0
+          # persist-credentials default true, needed to push tags with GITHUB_TOKEN
 
-      - name: Setup Go
+      - name: Setup Go (from go.work)
         uses: actions/setup-go@v5
         with:
           go-version-file: go.work
+          cache: true
 
       - name: Install AWS multi-module tools
         run: |
           go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/calculaterelease@latest
           go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/tagrelease@latest
-          go install github.com/awslabs/aws-go-multi-module-repository-tools/cmd/changelog@latest
 
       - name: Configure Git user
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Calculate next per-module versions
+      - name: Calculate next versions (defaults to PATCH if no annotations)
         run: |
           rm -f release.json
           calculaterelease -v -o release.json
+          cat release.json
 
-      - name: Create and push tags per module
+      - name: Create tags from manifest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tagrelease -release release.json
-          git push --follow-tags || true
+
+      - name: Push tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push --follow-tags
