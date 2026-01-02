@@ -1,4 +1,4 @@
-go 1.25.0
+go 1.25.5
 
 use (
 	.
@@ -11,4 +11,5 @@ use (
 	pubsub/kafkit
 	pubsub/segmentio
 	pubsub/franzgo
+	httpx
 )
