@@ -22,11 +22,7 @@ func TestServer_RunGracefulContext(t *testing.T) {
 	srv := New(
 		WithName("test-api"),
 		WithAddr(":18080"), // fixed port for test
-		WithRoutes(func(r *gin.Engine) {
-			r.GET("/healthz", func(c *gin.Context) {
-				c.String(200, "ok")
-			})
-		}),
+		WithRoutes(PublicRoutes),
 	)
 
 	// Run server in the background

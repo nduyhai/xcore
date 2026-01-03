@@ -20,4 +20,20 @@ type Config struct {
 
 	// Gin
 	GinMode string // gin.ReleaseMode / gin.DebugMode / gin.TestMode
+
+	// profiling
+	Profiling ProfilingConfig
+	Pprof     PprofConfig
+}
+
+type ProfilingConfig struct {
+	Enabled       bool
+	ServerAddress string            // e.g. http://pyroscope.monitoring:4040
+	Tags          map[string]string // env, version, pod, etc
+	TagByRoute    bool              // add gin middleware to tag by method+path
+}
+
+type PprofConfig struct {
+	Enabled bool
+	Prefix  string // default: "/debug/pprof"
 }

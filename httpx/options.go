@@ -76,6 +76,16 @@ func WithRoutes(fn Routes) Option {
 	}
 }
 
+func WithProfiling(p ProfilingConfig) Option {
+	return func(s *Server) {
+		s.cfg.Profiling = p
+	}
+}
+
+func WithPprof(p PprofConfig) Option {
+	return func(s *Server) { s.cfg.Pprof = p }
+}
+
 func mergeConfig(base, in Config) Config {
 	// “in” overrides only non-zero / non-empty fields
 	if in.Name != "" {
@@ -105,6 +115,6 @@ func mergeConfig(base, in Config) Config {
 	if in.GinMode != "" {
 		base.GinMode = in.GinMode
 	}
-	// booleans: if caller wants explicit control, they should use WithTracing/WithMetrics
+	// booleans: if the caller wants explicit control, they should use WithTracing/WithMetrics
 	return base
 }

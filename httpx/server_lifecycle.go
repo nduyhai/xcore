@@ -21,5 +21,16 @@ func (s *Server) Stop() error {
 	defer cancel()
 
 	s.log.Info("http server stopping", "name", s.cfg.Name, "timeout", s.cfg.ShutdownTimeout.String())
-	return s.httpS.Shutdown(stopCtx)
+
+	var errs []error
+
+	if s.httpS != nil {
+		if err := s.httpS.Shutdown(stopCtx); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if err := s.stopAll(); err != nil {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
 }

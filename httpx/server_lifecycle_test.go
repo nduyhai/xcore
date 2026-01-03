@@ -17,11 +17,7 @@ func TestServer_StartAndStop(t *testing.T) {
 	srv := New(
 		WithName("test-api"),
 		WithAddr(":18081"),
-		WithRoutes(func(r *gin.Engine) {
-			r.GET("/healthz", func(c *gin.Context) {
-				c.String(200, "ok")
-			})
-		}),
+		WithRoutes(PublicRoutes),
 	)
 
 	// ---- Start server ----

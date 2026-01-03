@@ -1,13 +1,12 @@
 package httpx
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type Server struct {
@@ -15,11 +14,17 @@ type Server struct {
 	log      *slog.Logger
 	routeFns []Routes
 
-	engine *gin.Engine
-	httpS  *http.Server
+	engine  *gin.Engine
+	handler http.Handler
+	httpS   *http.Server
+
+	inits    []initFn
+	stoppers []func() error
 }
 
-func New(opts ...Option) *Server {
+type initFn func(*Server) error
+
+func New(opts ...Option) (*Server, error) {
 	// defaults
 	s := &Server{
 		cfg: Config{
@@ -34,6 +39,14 @@ func New(opts ...Option) *Server {
 			EnableMetrics:     false,
 			MetricsPath:       "/metrics",
 			GinMode:           gin.ReleaseMode,
+			Profiling: ProfilingConfig{
+				Enabled:    false,
+				TagByRoute: true,
+			},
+			Pprof: PprofConfig{
+				Enabled: false,
+				Prefix:  "/debug/pprof",
+			},
 		},
 		log: slog.Default(),
 	}
@@ -42,13 +55,15 @@ func New(opts ...Option) *Server {
 		o(s)
 	}
 
-	s.build()
-	return s
+	// register module init functions (central place)
+	s.registerInits()
+
+	return s, s.build()
 }
 
 func (s *Server) Engine() *gin.Engine { return s.engine }
 
-func (s *Server) build() {
+func (s *Server) build() error {
 	gin.SetMode(s.cfg.GinMode)
 
 	r := gin.New()
@@ -58,25 +73,59 @@ func (s *Server) build() {
 	for _, fn := range s.routeFns {
 		fn(r)
 	}
-
-	// Metrics endpoint (Prometheus scrape)
-	if s.cfg.EnableMetrics {
-		r.GET(s.cfg.MetricsPath, gin.WrapH(promhttp.Handler()))
-	}
-
-	// Handler (optionally traced)
-	var handler http.Handler = r
-	if s.cfg.EnableTracing {
-		handler = otelhttp.NewHandler(r, "http.server")
-	}
-
 	s.engine = r
 	s.httpS = &http.Server{
 		Addr:              s.cfg.Addr,
-		Handler:           handler,
+		Handler:           s.handler,
 		ReadHeaderTimeout: s.cfg.ReadHeaderTimeout,
 		ReadTimeout:       s.cfg.ReadTimeout,
 		WriteTimeout:      s.cfg.WriteTimeout,
 		IdleTimeout:       s.cfg.IdleTimeout,
 	}
+
+	// run init pipeline
+	for _, init := range s.inits {
+		if err := init(s); err != nil {
+			_ = s.stopAll() // best-effort cleanup
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) addInit(f initFn) {
+	s.inits = append(s.inits, f)
+}
+
+func (s *Server) addStopper(f func() error) {
+	s.stoppers = append(s.stoppers, f)
+}
+
+func (s *Server) registerInits() {
+	// order matters
+	s.addInit((*Server).initTracing)   //Tracing
+	s.addInit((*Server).initMetrics)   // Metrics
+	s.addInit((*Server).initPprof)     // /debug/pprof route or debug server
+	s.addInit((*Server).initProfiling) // pyroscope continuous profiling
+
+}
+func (s *Server) registerStopper(f func() error) {
+	s.stoppers = append(s.stoppers, f)
+}
+
+func (s *Server) stopAll() error {
+	var errs []error
+
+	for i := len(s.stoppers) - 1; i >= 0; i-- {
+		stop := s.stoppers[i]
+		if stop == nil {
+			continue
+		}
+		if err := stop(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }
