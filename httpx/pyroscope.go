@@ -3,6 +3,7 @@ package httpx
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/grafana/pyroscope-go"
@@ -35,6 +36,13 @@ func (s *Server) initProfiling() error {
 		return nil
 	}
 
+	if p.MutexRate > 0 {
+		runtime.SetMutexProfileFraction(p.MutexRate)
+	}
+
+	if p.BlockRate > 0 {
+		runtime.SetBlockProfileRate(p.BlockRate)
+	}
 	profiler, err := pyroscope.Start(pyroscope.Config{
 		ApplicationName: s.cfg.Name,
 		ServerAddress:   p.ServerAddress,
