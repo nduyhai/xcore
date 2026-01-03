@@ -73,15 +73,8 @@ func (s *Server) build() error {
 	for _, fn := range s.routeFns {
 		fn(r)
 	}
+
 	s.engine = r
-	s.httpS = &http.Server{
-		Addr:              s.cfg.Addr,
-		Handler:           s.handler,
-		ReadHeaderTimeout: s.cfg.ReadHeaderTimeout,
-		ReadTimeout:       s.cfg.ReadTimeout,
-		WriteTimeout:      s.cfg.WriteTimeout,
-		IdleTimeout:       s.cfg.IdleTimeout,
-	}
 
 	// run init pipeline
 	for _, init := range s.inits {
@@ -89,6 +82,15 @@ func (s *Server) build() error {
 			_ = s.stopAll() // best-effort cleanup
 			return err
 		}
+	}
+
+	s.httpS = &http.Server{
+		Addr:              s.cfg.Addr,
+		Handler:           s.handler,
+		ReadHeaderTimeout: s.cfg.ReadHeaderTimeout,
+		ReadTimeout:       s.cfg.ReadTimeout,
+		WriteTimeout:      s.cfg.WriteTimeout,
+		IdleTimeout:       s.cfg.IdleTimeout,
 	}
 
 	return nil
