@@ -62,7 +62,7 @@ func WithProfilingBlockRate(rate int) ProfilingOption {
 	return func(c *ProfilingConfig) { c.BlockRate = rate }
 }
 
-func NewProfilingConfig(serverAddr, app string, opts ...ProfilingOption) ProfilingConfig {
+func NewProfilingConfig(serverAddr string, opts ...ProfilingOption) ProfilingConfig {
 	cfg := ProfilingConfig{
 		Enabled:       true,
 		ServerAddress: serverAddr,
