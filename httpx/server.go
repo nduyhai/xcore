@@ -38,8 +38,6 @@ func New(opts ...Option) (*Server, error) {
 			WriteTimeout:      30 * time.Second,
 			IdleTimeout:       60 * time.Second,
 			ShutdownTimeout:   15 * time.Second,
-			EnableMetrics:     false,
-			MetricsPath:       "/metrics",
 			GinMode:           gin.ReleaseMode,
 			Profiling: ProfilingConfig{
 				Enabled:    false,
@@ -50,8 +48,14 @@ func New(opts ...Option) (*Server, error) {
 				Prefix:  "/debug/pprof",
 			},
 			Tracing: TracingConfig{
-				Enable:       false,
+				Enabled:      false,
 				OTLPEndpoint: "localhost:4318",
+			},
+			Metrics: MetricsConfig{
+				Enabled:                false,
+				Path:                   "/metrics",
+				EnableGoCollector:      true,
+				EnableProcessCollector: true,
 			},
 		},
 		log: slog.Default(),

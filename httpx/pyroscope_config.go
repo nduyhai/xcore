@@ -1,34 +1,5 @@
 package httpx
 
-import "time"
-
-type Config struct {
-	Name    string
-	Version string
-	Addr    string
-
-	// Timeouts
-	ReadHeaderTimeout time.Duration
-	ReadTimeout       time.Duration
-	WriteTimeout      time.Duration
-	IdleTimeout       time.Duration
-	ShutdownTimeout   time.Duration
-
-	// Features
-	EnableMetrics bool
-	MetricsPath   string // default "/metrics"
-
-	// Gin
-	GinMode string // gin.ReleaseMode / gin.DebugMode / gin.TestMode
-
-	// profiling
-	Profiling ProfilingConfig
-	Pprof     PprofConfig
-
-	//Tracing
-	Tracing TracingConfig
-}
-
 type ProfilingConfig struct {
 	Enabled       bool
 	ServerAddress string            // e.g. http://pyroscope.monitoring:4040
@@ -77,33 +48,4 @@ func NewProfilingConfig(serverAddr string, opts ...ProfilingOption) ProfilingCon
 		o(&cfg)
 	}
 	return cfg
-}
-
-type PprofConfig struct {
-	Enabled bool
-	Prefix  string // default: "/debug/pprof"
-}
-
-type PprofOption func(*PprofConfig)
-
-func WithPprofPrefix(prefix string) PprofOption {
-	return func(c *PprofConfig) { c.Prefix = prefix }
-}
-
-func EnablePprof(opts ...PprofOption) PprofConfig {
-	cfg := PprofConfig{
-		Enabled: true,
-		Prefix:  "/debug/pprof",
-	}
-	for _, o := range opts {
-		o(&cfg)
-	}
-	return cfg
-}
-
-func DisablePprof() PprofConfig { return PprofConfig{Enabled: false} }
-
-type TracingConfig struct {
-	Enable       bool
-	OTLPEndpoint string
 }

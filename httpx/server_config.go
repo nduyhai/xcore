@@ -7,6 +7,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Config struct {
+	Name    string
+	Version string
+	Addr    string
+
+	// Timeouts
+	ReadHeaderTimeout time.Duration
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
+	ShutdownTimeout   time.Duration
+
+	// Gin
+	GinMode string // gin.ReleaseMode / gin.DebugMode / gin.TestMode
+
+	// profiling
+	Profiling ProfilingConfig
+	Pprof     PprofConfig
+
+	//Tracing
+	Tracing TracingConfig
+
+	//Metrics
+	Metrics MetricsConfig
+}
+
 type Option func(*Server)
 
 func WithConfig(cfg Config) Option {
@@ -59,19 +85,15 @@ func WithTimeouts(readHeader, read, write, idle, shutdown time.Duration) Option 
 	}
 }
 
-func WithMetrics(path string) Option {
+func WithMetrics(config MetricsConfig) Option {
 	return func(s *Server) {
-		s.cfg.EnableMetrics = true
-		if path != "" {
-			s.cfg.MetricsPath = path
-		}
+		s.cfg.Metrics = config
 	}
 }
 
-func WithTracing(endpoint string) Option {
+func WithTracing(config TracingConfig) Option {
 	return func(s *Server) {
-		s.cfg.Tracing.Enable = true
-		s.cfg.Tracing.OTLPEndpoint = endpoint
+		s.cfg.Tracing = config
 	}
 }
 
@@ -115,9 +137,6 @@ func mergeConfig(base, in Config) Config {
 	}
 	if in.ShutdownTimeout > 0 {
 		base.ShutdownTimeout = in.ShutdownTimeout
-	}
-	if in.MetricsPath != "" {
-		base.MetricsPath = in.MetricsPath
 	}
 	if in.GinMode != "" {
 		base.GinMode = in.GinMode

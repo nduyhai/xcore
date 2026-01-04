@@ -8,6 +8,8 @@ require (
 	github.com/grafana/pyroscope-go v1.2.7
 	github.com/prometheus/client_golang v1.23.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.39.0
+	go.opentelemetry.io/contrib/propagators/jaeger v1.39.0
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.39.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.61.0
