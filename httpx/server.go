@@ -38,7 +38,6 @@ func New(opts ...Option) (*Server, error) {
 			WriteTimeout:      30 * time.Second,
 			IdleTimeout:       60 * time.Second,
 			ShutdownTimeout:   15 * time.Second,
-			EnableTracing:     false,
 			EnableMetrics:     false,
 			MetricsPath:       "/metrics",
 			GinMode:           gin.ReleaseMode,
@@ -49,6 +48,10 @@ func New(opts ...Option) (*Server, error) {
 			Pprof: PprofConfig{
 				Enabled: false,
 				Prefix:  "/debug/pprof",
+			},
+			Tracing: TracingConfig{
+				Enable:       false,
+				OTLPEndpoint: "localhost:4318",
 			},
 		},
 		log: slog.Default(),
@@ -107,11 +110,11 @@ func (s *Server) addStopper(f stopFn) {
 
 func (s *Server) registerInits() {
 	// order matters
-	s.addInit((*Server).initTracing)   //Tracing
-	s.addInit((*Server).initMetrics)   // Metrics
-	s.addInit((*Server).initPprof)     // /debug/pprof route or debug server
-	s.addInit((*Server).initProfiling) // pyroscope continuous profiling
-	s.addInit((*Server).initRouters)   // routers
+	s.addInit((*Server).initTracerProvider) //Tracing
+	s.addInit((*Server).initMetrics)        // Metrics
+	s.addInit((*Server).initPprof)          // /debug/pprof route or debug server
+	s.addInit((*Server).initProfiling)      // pyroscope continuous profiling
+	s.addInit((*Server).initRouters)        // routers
 
 }
 func (s *Server) registerStopper(f stopFn) {

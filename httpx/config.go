@@ -15,7 +15,6 @@ type Config struct {
 	ShutdownTimeout   time.Duration
 
 	// Features
-	EnableTracing bool
 	EnableMetrics bool
 	MetricsPath   string // default "/metrics"
 
@@ -25,6 +24,9 @@ type Config struct {
 	// profiling
 	Profiling ProfilingConfig
 	Pprof     PprofConfig
+
+	//Tracing
+	Tracing TracingConfig
 }
 
 type ProfilingConfig struct {
@@ -100,3 +102,8 @@ func EnablePprof(opts ...PprofOption) PprofConfig {
 }
 
 func DisablePprof() PprofConfig { return PprofConfig{Enabled: false} }
+
+type TracingConfig struct {
+	Enable       bool
+	OTLPEndpoint string
+}

@@ -68,8 +68,11 @@ func WithMetrics(path string) Option {
 	}
 }
 
-func WithTracing(enable bool) Option {
-	return func(s *Server) { s.cfg.EnableTracing = enable }
+func WithTracing(endpoint string) Option {
+	return func(s *Server) {
+		s.cfg.Tracing.Enable = true
+		s.cfg.Tracing.OTLPEndpoint = endpoint
+	}
 }
 
 func WithRoutes(fn Routes) Option {
