@@ -53,6 +53,7 @@ func (s *Server) initMetrics() error {
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(exp),
 		sdkmetric.WithResource(res),
+		sdkmetric.WithView(OTelMetricView()),
 	)
 
 	otel.SetMeterProvider(mp)
@@ -70,6 +71,23 @@ func (s *Server) initMetrics() error {
 	return nil
 }
 
+func OTelMetricView() sdkmetric.View {
+	return sdkmetric.NewView(
+		sdkmetric.Instrument{
+			Name: "http.server.*",
+		},
+		sdkmetric.Stream{
+			AttributeFilter: func(kv attribute.KeyValue) bool {
+				switch kv.Key {
+				case "http.method", "http.route", "http.status_code":
+					return true
+				default:
+					return false
+				}
+			},
+		},
+	)
+}
 func OTelHTTPServerMetricsMiddleware() gin.HandlerFunc {
 	meter := otel.Meter("http.server")
 
