@@ -57,6 +57,10 @@ func New(opts ...Option) (*Server, error) {
 				EnableGoCollector:      true,
 				EnableProcessCollector: true,
 			},
+			Obs: ObservabilityConfig{
+				Mode:    ObsModeManual,
+				Enabled: false,
+			},
 		},
 		log: slog.Default(),
 	}
@@ -114,11 +118,10 @@ func (s *Server) addStopper(f stopFn) {
 
 func (s *Server) registerInits() {
 	// order matters
-	s.addInit((*Server).initTracerProvider) //Tracing
-	s.addInit((*Server).initMetrics)        // Metrics
-	s.addInit((*Server).initPprof)          // /debug/pprof route or debug server
-	s.addInit((*Server).initProfiling)      // pyroscope continuous profiling
-	s.addInit((*Server).initRouters)        // routers
+	s.addInit((*Server).initObservability) //Observability
+	s.addInit((*Server).initPprof)         // /debug/pprof route or debug server
+	s.addInit((*Server).initProfiling)     // pyroscope continuous profiling
+	s.addInit((*Server).initRouters)       // routers
 
 }
 func (s *Server) registerStopper(f stopFn) {

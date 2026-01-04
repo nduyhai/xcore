@@ -31,6 +31,9 @@ type Config struct {
 
 	//Metrics
 	Metrics MetricsConfig
+
+	//Observabilit
+	Obs ObservabilityConfig
 }
 
 type Option func(*Server)
@@ -94,6 +97,12 @@ func WithMetrics(config MetricsConfig) Option {
 func WithTracing(config TracingConfig) Option {
 	return func(s *Server) {
 		s.cfg.Tracing = config
+	}
+}
+
+func WithObservability(config ObservabilityConfig) Option {
+	return func(s *Server) {
+		s.cfg.Obs = config
 	}
 }
 
