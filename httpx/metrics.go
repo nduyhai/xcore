@@ -22,8 +22,17 @@ func (s *Server) initMetrics() error {
 	if !s.cfg.EnableMetrics {
 		return nil
 	}
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+
 	// Create Prometheus exporter (OTel Metric Reader)
-	exp, err := otelprom.New()
+	exp, err := otelprom.New(
+		otelprom.WithRegisterer(reg),
+	)
 	if err != nil {
 		return err
 	}
@@ -48,14 +57,9 @@ func (s *Server) initMetrics() error {
 
 	otel.SetMeterProvider(mp)
 
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
-	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
-
 	s.engine.Use(OTelHTTPServerMetricsMiddleware())
+
+	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 	s.engine.GET(s.cfg.MetricsPath, gin.WrapH(h))
 
 	// Register shutdown hook (important!)
