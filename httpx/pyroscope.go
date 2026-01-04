@@ -65,7 +65,7 @@ func (s *Server) initProfiling() error {
 		return fmt.Errorf("pyroscope start: %w", err)
 	}
 
-	s.registerStopper(func() error {
+	s.registerStopper(func(ctx context.Context) error {
 		return profiler.Stop()
 	})
 
