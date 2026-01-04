@@ -24,10 +24,7 @@ func (s *Server) initMetrics() error {
 	}
 
 	reg := prometheus.NewRegistry()
-	reg.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
+
 	if s.cfg.Metrics.EnableGoCollector {
 		reg.MustRegister(collectors.NewGoCollector())
 	}

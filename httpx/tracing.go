@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	b3prop "go.opentelemetry.io/contrib/propagators/b3"
-	jaegerprop "go.opentelemetry.io/contrib/propagators/jaeger"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -73,28 +72,16 @@ func (s *Server) initTracerProvider() error {
 }
 
 func buildPropagator(cfg TracingConfig) propagation.TextMapPropagator {
-	var props []propagation.TextMapPropagator
-
-	// always safe to include baggage
-	props = append(props, propagation.Baggage{})
-
-	// default behavior if not set
-	formats := cfg.Propagation
-	if len(formats) == 0 {
-		formats = []PropagationFormat{PropW3C}
+	// Default behavior = OTEL spec default
+	// tracecontext + baggage
+	if len(cfg.Propagators) == 0 {
+		return autoprop.NewTextMapPropagator()
 	}
 
-	for _, f := range formats {
-		switch f {
-		case PropW3C:
-			props = append(props, propagation.TraceContext{})
-		case PropB3:
-			// B3 supports both single and multi header via New()
-			props = append(props, b3prop.New())
-		case PropJaeger:
-			props = append(props, jaegerprop.Jaeger{})
-		}
+	p, err := autoprop.TextMapPropagator(cfg.Propagators...)
+	if err != nil {
+		// Fail-safe: fall back to default instead of breaking tracing
+		return autoprop.NewTextMapPropagator()
 	}
-
-	return propagation.NewCompositeTextMapPropagator(props...)
+	return p
 }
