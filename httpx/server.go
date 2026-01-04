@@ -17,7 +17,7 @@ type Server struct {
 
 	engine  *gin.Engine
 	handler http.Handler
-	httpS   *http.Server
+	httpSrv *http.Server
 
 	inits    []initFn
 	stoppers []stopFn
@@ -67,20 +67,16 @@ func New(opts ...Option) (*Server, error) {
 func (s *Server) Engine() *gin.Engine { return s.engine }
 
 func (s *Server) build() error {
+	stopCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
+	defer cancel()
+
 	gin.SetMode(s.cfg.GinMode)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	// Register routes from modules
-	for _, fn := range s.routeFns {
-		fn(r)
-	}
-
 	s.engine = r
 
-	stopCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
-	defer cancel()
 	// run init pipeline
 	for _, init := range s.inits {
 		if err := init(s); err != nil {
@@ -89,7 +85,7 @@ func (s *Server) build() error {
 		}
 	}
 
-	s.httpS = &http.Server{
+	s.httpSrv = &http.Server{
 		Addr:              s.cfg.Addr,
 		Handler:           s.handler,
 		ReadHeaderTimeout: s.cfg.ReadHeaderTimeout,
@@ -98,9 +94,6 @@ func (s *Server) build() error {
 		IdleTimeout:       s.cfg.IdleTimeout,
 	}
 
-	for _, ri := range s.engine.Routes() {
-		s.log.Info("route", "method", ri.Method, "path", ri.Path)
-	}
 	return nil
 }
 
@@ -118,10 +111,23 @@ func (s *Server) registerInits() {
 	s.addInit((*Server).initMetrics)   // Metrics
 	s.addInit((*Server).initPprof)     // /debug/pprof route or debug server
 	s.addInit((*Server).initProfiling) // pyroscope continuous profiling
+	s.addInit((*Server).initRouters)   // routers
 
 }
 func (s *Server) registerStopper(f stopFn) {
 	s.stoppers = append(s.stoppers, f)
+}
+
+func (s *Server) initRouters() error {
+	// Register routes from modules
+	for _, fn := range s.routeFns {
+		fn(s.engine)
+	}
+	for _, ri := range s.engine.Routes() {
+		s.log.Info("route", "method", ri.Method, "path", ri.Path)
+	}
+
+	return nil
 }
 
 func (s *Server) stopAll(ctx context.Context) error {

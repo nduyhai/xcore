@@ -9,7 +9,7 @@ import (
 func (s *Server) Start() error {
 	go func() {
 		s.log.Info("http server starting", "name", s.cfg.Name, "addr", s.cfg.Addr)
-		if err := s.httpS.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.log.Error("http server failed", "err", err)
 		}
 	}()
@@ -24,8 +24,8 @@ func (s *Server) Stop() error {
 
 	var errs []error
 
-	if s.httpS != nil {
-		if err := s.httpS.Shutdown(stopCtx); err != nil {
+	if s.httpSrv != nil {
+		if err := s.httpSrv.Shutdown(stopCtx); err != nil {
 			errs = append(errs, err)
 		}
 	}
