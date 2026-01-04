@@ -12,6 +12,6 @@ type ObservabilityConfig struct {
 	Enabled bool
 }
 
-func NewObservabilityConfig(mode ObsMode) *ObservabilityConfig {
-	return &ObservabilityConfig{Mode: mode}
+func NewObservabilityConfig(mode ObsMode) ObservabilityConfig {
+	return ObservabilityConfig{Mode: mode, Enabled: true}
 }

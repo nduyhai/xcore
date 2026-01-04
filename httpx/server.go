@@ -96,6 +96,10 @@ func (s *Server) build() error {
 		}
 	}
 
+	if s.handler == nil {
+		s.handler = s.engine
+	}
+
 	s.httpSrv = &http.Server{
 		Addr:              s.cfg.Addr,
 		Handler:           s.handler,
