@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/contrib/exporters/autoexport"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -63,7 +64,7 @@ func (s *Server) initObservabilityAutoExport() error {
 		return mp.Shutdown(ctx)
 	})
 
-	return nil
+	return s.initOTelHttp()
 }
 
 func (s *Server) initObservabilityManual() error {
@@ -78,4 +79,9 @@ func (s *Server) initObservabilityManual() error {
 	}
 	return errors.Join(errs...)
 
+}
+
+func (s *Server) initOTelHttp() error {
+	s.engine.Use(otelgin.Middleware(s.cfg.Name))
+	return nil
 }

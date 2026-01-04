@@ -2,9 +2,7 @@ package httpx
 
 import (
 	"context"
-	"net/http"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -59,15 +57,7 @@ func (s *Server) initTracerProvider() error {
 	})
 
 	// 6) Wrap Gin engine as final handler
-	var h http.Handler = s.engine
-	h = otelhttp.NewHandler(
-		h,
-		"http.server",
-		otelhttp.WithServerName(s.cfg.Name),
-	)
-	s.handler = h
-
-	return nil
+	return s.initOTelHttp()
 }
 
 func buildPropagator(cfg TracingConfig) propagation.TextMapPropagator {
