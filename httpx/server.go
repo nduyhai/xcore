@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -19,16 +20,18 @@ type Server struct {
 	httpS   *http.Server
 
 	inits    []initFn
-	stoppers []func() error
+	stoppers []stopFn
 }
 
 type initFn func(*Server) error
+type stopFn func(ctx context.Context) error
 
 func New(opts ...Option) (*Server, error) {
 	// defaults
 	s := &Server{
 		cfg: Config{
 			Name:              "http",
+			Version:           "1.0.0",
 			Addr:              ":8080",
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       30 * time.Second,
@@ -76,10 +79,12 @@ func (s *Server) build() error {
 
 	s.engine = r
 
+	stopCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
+	defer cancel()
 	// run init pipeline
 	for _, init := range s.inits {
 		if err := init(s); err != nil {
-			_ = s.stopAll() // best-effort cleanup
+			_ = s.stopAll(stopCtx) // best-effort cleanup
 			return err
 		}
 	}
@@ -100,7 +105,7 @@ func (s *Server) addInit(f initFn) {
 	s.inits = append(s.inits, f)
 }
 
-func (s *Server) addStopper(f func() error) {
+func (s *Server) addStopper(f stopFn) {
 	s.stoppers = append(s.stoppers, f)
 }
 
@@ -112,11 +117,11 @@ func (s *Server) registerInits() {
 	s.addInit((*Server).initProfiling) // pyroscope continuous profiling
 
 }
-func (s *Server) registerStopper(f func() error) {
+func (s *Server) registerStopper(f stopFn) {
 	s.stoppers = append(s.stoppers, f)
 }
 
-func (s *Server) stopAll() error {
+func (s *Server) stopAll(ctx context.Context) error {
 	var errs []error
 
 	for i := len(s.stoppers) - 1; i >= 0; i-- {
@@ -124,7 +129,7 @@ func (s *Server) stopAll() error {
 		if stop == nil {
 			continue
 		}
-		if err := stop(); err != nil {
+		if err := stop(ctx); err != nil {
 			errs = append(errs, err)
 		}
 	}

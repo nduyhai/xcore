@@ -29,7 +29,7 @@ func (s *Server) Stop() error {
 			errs = append(errs, err)
 		}
 	}
-	if err := s.stopAll(); err != nil {
+	if err := s.stopAll(stopCtx); err != nil {
 		errs = append(errs, err)
 	}
 	return errors.Join(errs...)

@@ -17,6 +17,10 @@ func WithName(name string) Option {
 	return func(s *Server) { s.cfg.Name = name }
 }
 
+func WithVersion(version string) Option {
+	return func(s *Server) { s.cfg.Version = version }
+}
+
 func WithAddr(addr string) Option {
 	return func(s *Server) { s.cfg.Addr = addr }
 }

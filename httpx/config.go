@@ -3,8 +3,9 @@ package httpx
 import "time"
 
 type Config struct {
-	Name string
-	Addr string
+	Name    string
+	Version string
+	Addr    string
 
 	// Timeouts
 	ReadHeaderTimeout time.Duration
