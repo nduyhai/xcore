@@ -27,8 +27,7 @@ func (s *Server) initTracerProvider() error {
 	// 2) Exporter (example: OTLP/HTTP)
 	exp, err := otlptracehttp.New(
 		context.Background(),
-		otlptracehttp.WithEndpoint(s.cfg.Tracing.OTLPEndpoint), // "localhost:4318"
-		otlptracehttp.WithInsecure(),
+		otlptracehttp.WithEndpointURL(s.cfg.Tracing.OTLPEndpoint), // "http://localhost:4318/v1/traces"
 	)
 	if err != nil {
 		return err
@@ -72,16 +71,24 @@ func (s *Server) initTracerProvider() error {
 }
 
 func buildPropagator(cfg TracingConfig) propagation.TextMapPropagator {
-	// Default behavior = OTEL spec default
-	// tracecontext + baggage
 	if len(cfg.Propagators) == 0 {
-		return autoprop.NewTextMapPropagator()
+		if cfg.IncludeBaggage {
+			return autoprop.NewTextMapPropagator() // tracecontext+baggage
+		}
+		p, err := autoprop.TextMapPropagator("tracecontext")
+		if err == nil {
+			return p
+		}
+		return propagation.TraceContext{}
 	}
 
 	p, err := autoprop.TextMapPropagator(cfg.Propagators...)
 	if err != nil {
-		// Fail-safe: fall back to default instead of breaking tracing
-		return autoprop.NewTextMapPropagator()
+		p2, err2 := autoprop.TextMapPropagator("tracecontext")
+		if err2 == nil {
+			return p2
+		}
+		return propagation.TraceContext{}
 	}
 	return p
 }

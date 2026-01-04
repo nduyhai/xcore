@@ -49,7 +49,7 @@ func New(opts ...Option) (*Server, error) {
 			},
 			Tracing: TracingConfig{
 				Enabled:      false,
-				OTLPEndpoint: "localhost:4318",
+				OTLPEndpoint: "http://localhost:4318/v1/traces",
 			},
 			Metrics: MetricsConfig{
 				Enabled:                false,

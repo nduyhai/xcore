@@ -4,7 +4,8 @@ type TracingConfig struct {
 	Enabled      bool
 	OTLPEndpoint string
 	// Optional
-	Propagators []string
+	Propagators    []string
+	IncludeBaggage bool
 }
 
 func NewTracingConfig(otlpEndpoint string, opts ...TracingOption) TracingConfig {
@@ -13,7 +14,8 @@ func NewTracingConfig(otlpEndpoint string, opts ...TracingOption) TracingConfig 
 		OTLPEndpoint: otlpEndpoint,
 
 		// default: modern standard
-		Propagators: []string{"tracecontext"},
+		Propagators:    []string{"tracecontext"},
+		IncludeBaggage: false,
 	}
 
 	for _, o := range opts {
@@ -34,5 +36,11 @@ func WithPropagation(formats ...string) TracingOption {
 func WithDiableTracing() Option {
 	return func(s *Server) {
 		s.cfg.Tracing.Enabled = false
+	}
+}
+
+func WithEnableBaggage() Option {
+	return func(s *Server) {
+		s.cfg.Tracing.IncludeBaggage = true
 	}
 }
