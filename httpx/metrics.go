@@ -15,7 +15,7 @@ import (
 
 func (s *Server) initMetrics() error {
 	// Metrics endpoint (Prometheus scrape)
-	if s.cfg.EnableMetrics {
+	if !s.cfg.EnableMetrics {
 		return nil
 	}
 	// Create Prometheus exporter (OTel Metric Reader)

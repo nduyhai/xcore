@@ -98,6 +98,9 @@ func (s *Server) build() error {
 		IdleTimeout:       s.cfg.IdleTimeout,
 	}
 
+	for _, ri := range s.engine.Routes() {
+		s.log.Info("route", "method", ri.Method, "path", ri.Path)
+	}
 	return nil
 }
 
