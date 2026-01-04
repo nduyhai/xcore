@@ -2,12 +2,16 @@ package httpx
 
 import (
 	"context"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.38.0"
@@ -45,7 +49,13 @@ func (s *Server) initMetrics() error {
 	otel.SetMeterProvider(mp)
 
 	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
 	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
+
+	s.engine.Use(OTelHTTPServerMetricsMiddleware())
 	s.engine.GET(s.cfg.MetricsPath, gin.WrapH(h))
 
 	// Register shutdown hook (important!)
@@ -54,4 +64,43 @@ func (s *Server) initMetrics() error {
 	})
 
 	return nil
+}
+
+func OTelHTTPServerMetricsMiddleware() gin.HandlerFunc {
+	meter := otel.Meter("http.server")
+
+	reqTotal, _ := meter.Int64Counter(
+		"http.server.requests_total",
+	)
+	reqDur, _ := meter.Float64Histogram(
+		"http.server.request.duration",
+		metric.WithUnit("s"),
+	)
+	inflight, _ := meter.Int64UpDownCounter(
+		"http.server.active_requests",
+	)
+
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		start := time.Now()
+
+		inflight.Add(ctx, 1)
+		defer inflight.Add(ctx, -1)
+
+		c.Next()
+
+		route := c.FullPath()
+		if route == "" {
+			route = c.Request.URL.Path
+		}
+
+		attrs := []attribute.KeyValue{
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.route", route),
+			attribute.Int("http.status_code", c.Writer.Status()),
+		}
+
+		reqTotal.Add(ctx, 1, metric.WithAttributes(attrs...))
+		reqDur.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(attrs...))
+	}
 }
